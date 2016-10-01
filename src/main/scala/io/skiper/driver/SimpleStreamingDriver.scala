@@ -31,17 +31,13 @@ object SimpleStreamingDriver {
 
     // Create the context with a 1 second batch size
     val sparkConf = new SparkConf().setMaster("local[2]").setAppName("Simple-Streaming")
-    /*sparkConf.set("es.index.auto.create", "true");
-    sparkConf.set("es.nodes", "dataservice-324")*/
+    sparkConf.set("es.index.auto.create", "true");
+    sparkConf.set("es.nodes", "dataservice-324")
     val ssc = new StreamingContext(sparkConf, Seconds(2))
     addStreamListener(ssc, redis)
 
-    // Create Kafka Receiver//
-    // 10 1.1.1.1  2.2.2.2  //lines
-    // 20  1.1.1.1  3.3.3.3
-    // 40 1.1.1. 4.4.4.4
-
-    val Array(zkQuorum, group, topics, numThreads) = Array("localhost:2181" ,"my-consumer-group", "realtime", "1")
+    // Create Kafka Receiver
+    val Array(zkQuorum, group, topics, numThreads) = Array("dataservice-324:2181" ,"my-consumer-group", "realtime", "1")
     ssc.checkpoint("checkpoint")
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
     val lines = KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
@@ -65,10 +61,10 @@ object SimpleStreamingDriver {
     })
 
     // Write to ElasticSearch
-/*    wordList.foreachRDD(rdd => {
+    wordList.foreachRDD(rdd => {
       rdd.foreach(s => s.foreach(x => println(x.toString)))
       EsSpark.saveToEs(rdd, "realtime/blacklist")
-    })*/
+    })
 
     // Write to Redis
 
